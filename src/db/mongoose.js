@@ -6,8 +6,15 @@ mongoose.connect('mongodb://127.0.0.1:27017/task-manager-api', {
   useUnifiedTopology: true
 })
 
+// to check the connection to the db 
+var db = mongoose.connection;
 
+db.once('open', function () {
+  console.log("Successfully connected to MongoDB!");
+});
 
+// if connection error
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
 // const me = new User({
 //   name: 'Natali',

@@ -101,33 +101,33 @@ app.get('/users/me', auth, async (req, res) => {
 })
 
 // Get single user
-app.get('/users/:id', async (req, res) => {
-    const _id = req.params.id;
+// app.get('/users/:id', async (req, res) => {
+//     const _id = req.params.id;
 
-    try {
-        const user = await User.findById(_id); // if there's no user it will return null and keep continues to the next line so we should make if condition
-        if (!user) {
-            return res.status(404).send();
-        }
+//     try {
+//         const user = await User.findById(_id); // if there's no user it will return null and keep continues to the next line so we should make if condition
+//         if (!user) {
+//             return res.status(404).send();
+//         }
 
-        res.send(user);
-    } catch (e) {
-        res.status(500).send()
-    }
-    // User.findById(_id).then((user) => {
-    //     if (!user) {
-    //         console.log(user);
-    //         return res.status(404).send();
-    //     }
+//         res.send(user);
+//     } catch (e) {
+//         res.status(500).send()
+//     }
+// User.findById(_id).then((user) => {
+//     if (!user) {
+//         console.log(user);
+//         return res.status(404).send();
+//     }
 
-    //     res.send(user);
-    // }).catch((err) => {
-    //     res.status(500).send();
-    // })
-})
+//     res.send(user);
+// }).catch((err) => {
+//     res.status(500).send();
+// })
+// })
 
 // update user
-app.patch('/users/:id', async (req, res) => {
+app.patch('/users/me', auth, async (req, res) => {
 
     const updates = Object.keys(req.body);
     const allowedUpdates = ['name', 'email', 'age', 'password'];
@@ -139,40 +139,47 @@ app.patch('/users/:id', async (req, res) => {
     }
 
     try {
-        const user = await User.findById(req.params.id);
+        // const user = await User.findById(req.params.id);
 
         // !this line not updating the user!
         // updates.forEach((update) => user.update. = req.body.update);
         // !but this line works!
-        updates.forEach((update) => user[update] = req.body[update]);
+        updates.forEach((update) => req.user[update] = req.body[update]);
 
         // const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
 
-        if (!user) {
-            return res.status(404).send();
-        }
+        // if (!user) {
+        //     return res.status(404).send();
+        // }
 
-        await user.save();
-        res.send(user);
+        await req.user.save();
+        res.send(req.user);
     } catch (e) {
         res.status(400).send(e);
     }
 })
 
 // delete a user
-app.delete('/users/:id', async (req, res) => {
-    const id = req.params.id;
+app.delete('/users/me', auth, async (req, res) => {
 
     try {
-        const user = await User.findByIdAndDelete(id);
-        if (!user) {
-            res.status(404).send()
-        }
-
-        res.send(user);
+        await req.user.remove();
+        res.send(req.user)
     } catch (e) {
-        res.send(500).send(e);
+        res.status(500).send();
     }
+    // const id = req.params.id;
+
+    // try {
+    //     const user = await User.findByIdAndDelete(id);
+    //     if (!user) {
+    //         res.status(404).send()
+    //     }
+
+    //     res.send(user);
+    // } catch (e) {
+    //     res.send(500).send(e);
+    // }
 })
 
 // =========Tasks Routes ============

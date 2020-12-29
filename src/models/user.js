@@ -61,6 +61,21 @@ userSchema.methods.generateAuthToken = async function () {
     return token;
 }
 
+// removing password and array of tokens from the user
+// This method accepts the same options as Document#toObject.
+// To apply the options to every document of your schema by default,
+// set your schemas toJSON option to the same argument.
+// userSchema.methods.getPublicProfile = function () {
+userSchema.methods.toJSON = function () {
+    const user = this;
+
+    const userObject = user.toObject();
+    delete userObject.password
+    delete userObject.tokens;
+
+    return userObject;
+}
+
 // Statics are pretty much the same as methods but allow for defining
 // functions that exist directly on your Model.
 

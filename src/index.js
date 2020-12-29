@@ -281,14 +281,18 @@ app.delete('/tasks/:id', async (req, res) => {
 
 // const jwt = require('jsonwebtoken');
 
-// const myFunction = async () => {
-//     const token = jwt.sign({ _id: 'abc123' }, 'thisismysecret')
-//     console.log(token)
 
-//     const data = jwt.verify(token, 'thisismysecret')
-//     console.log(data)
-// }
-// myFunction();
+// JSON.stringify() calls toJSON behind the scenese
+let pet = {
+    name: 'hal',
+}
+
+pet.toJSON = function () {
+    console.log(this);
+    return this;
+}
+console.log(JSON.stringify(pet))
+
 
 app.listen(port, () => {
     console.log(`server is listening to port ${port}`);

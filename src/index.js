@@ -185,10 +185,13 @@ app.delete('/users/me', auth, async (req, res) => {
 // =========Tasks Routes ============
 
 // create a task
-app.post('/tasks', async (req, res) => {
+app.post('/tasks', auth, async (req, res) => {
 
     try {
-        const task = new Task(req.body)
+        const task = new Task({
+            ...req.body,
+            owner: req.user._id
+        })
         await task.save();
         res.status(201).send(task);
     } catch (e) {
@@ -290,16 +293,29 @@ app.delete('/tasks/:id', async (req, res) => {
 
 
 // JSON.stringify() calls toJSON behind the scenese
-let pet = {
-    name: 'hal',
+// let pet = {
+//     name: 'hal',
+// }
+
+// pet.toJSON = function () {
+//     console.log(this);
+//     return this;
+// }
+// console.log(JSON.stringify(pet))
+
+// const Task = require('./models/task');
+
+const main = async () => {
+    // const task = await Task.findById('5feb5cca7a6bc32e00d2bd90');
+    // await task.populate('owner').execPopulate();
+    // console.log(task.owner)
+
+    const user = await User.findById('5feb43d60c1d7b4844c4bee8');
+    await user.populate('usertasks').execPopulate();
+    console.log(user.usertasks);
 }
 
-pet.toJSON = function () {
-    console.log(this);
-    return this;
-}
-console.log(JSON.stringify(pet))
-
+main();
 
 app.listen(port, () => {
     console.log(`server is listening to port ${port}`);

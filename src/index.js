@@ -11,19 +11,6 @@ const auth = require('./middleware/auth');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// app.use((req, res, next) => {
-//     if (req.method === 'GET') {
-//         res.send('Get requests is disabled')
-//     } else {
-//         next()
-//     }
-// })
-
-
-// app.use((req, res, next) => {
-//     res.status(503).send('Server is under maintenance')
-// })
-
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -41,17 +28,11 @@ app.post('/users', async (req, res) => {
     } catch (e) {
         res.status(400).send(e);
     }
-    // user.save().then((data) => {
-    //     res.status(201).send("success")
-    // }).catch((err) => {
-    //     res.status(400).send(err)
-    // })
 })
 
 // login user
 app.post('/users/login', async (req, res) => {
     try {
-        // in schema.statics we are calling findByCredentials by the the model itself
         const user = await User.findByCredentials(req.body.email, req.body.password);
         const token = await user.generateAuthToken();
         res.send({ user, token: token });
@@ -85,46 +66,8 @@ app.post('/users/logoutAll', auth, async (req, res) => {
 
 // Get me
 app.get('/users/me', auth, async (req, res) => {
-    // console.log(req.user)
     res.send(req.user);
-    // try {
-    //     const users = await User.find({});
-    //     res.send(users);
-    // } catch (e) {
-    //     res.send(500).send();
-    // }
-    // User.find({}).then((users) => {
-    //     res.send(users);
-    // }).catch((err) => {
-    //     res.status(500).send();
-    // })
 })
-
-// Get single user
-// app.get('/users/:id', async (req, res) => {
-//     const _id = req.params.id;
-
-//     try {
-//         const user = await User.findById(_id); // if there's no user it will return null and keep continues to the next line so we should make if condition
-//         if (!user) {
-//             return res.status(404).send();
-//         }
-
-//         res.send(user);
-//     } catch (e) {
-//         res.status(500).send()
-//     }
-// User.findById(_id).then((user) => {
-//     if (!user) {
-//         console.log(user);
-//         return res.status(404).send();
-//     }
-
-//     res.send(user);
-// }).catch((err) => {
-//     res.status(500).send();
-// })
-// })
 
 // update user
 app.patch('/users/me', auth, async (req, res) => {
@@ -139,18 +82,8 @@ app.patch('/users/me', auth, async (req, res) => {
     }
 
     try {
-        // const user = await User.findById(req.params.id);
 
-        // !this line not updating the user!
-        // updates.forEach((update) => user.update. = req.body.update);
-        // !but this line works!
         updates.forEach((update) => req.user[update] = req.body[update]);
-
-        // const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-
-        // if (!user) {
-        //     return res.status(404).send();
-        // }
 
         await req.user.save();
         res.send(req.user);
@@ -168,18 +101,6 @@ app.delete('/users/me', auth, async (req, res) => {
     } catch (e) {
         res.status(500).send();
     }
-    // const id = req.params.id;
-
-    // try {
-    //     const user = await User.findByIdAndDelete(id);
-    //     if (!user) {
-    //         res.status(404).send()
-    //     }
-
-    //     res.send(user);
-    // } catch (e) {
-    //     res.send(500).send(e);
-    // }
 })
 
 // =========Tasks Routes ============
@@ -197,29 +118,17 @@ app.post('/tasks', auth, async (req, res) => {
     } catch (e) {
         res.status(500).send(e);
     }
-
-    // task.save().then(() => {
-    //     res.status(201).send(task)
-    // }).catch((e) => {
-    //     res.status(400).send(e)
-    // })
 })
 
 // Get all tasks
 app.get('/tasks', auth, async (req, res) => {
 
     try {
-        // const tasks = await Task.find({ owner: req.user._id });
         await req.user.populate('usertasks').execPopulate();
         res.send(req.user.usertasks);
     } catch (e) {
         res.status(500).send(e);
     }
-    // Task.find({}).then((tasks) => {
-    //     res.send(tasks);
-    // }).catch((err) => {
-    //     err.status(500).send();
-    // })
 })
 
 // Get single task
@@ -227,7 +136,6 @@ app.get('/tasks/:id', auth, async (req, res) => {
     const _id = req.params.id;
 
     try {
-        // const task = await Task.findById(_id);
         const task = await Task.findOne({
             _id,
             owner: req.user._id
@@ -241,14 +149,6 @@ app.get('/tasks/:id', auth, async (req, res) => {
     } catch (e) {
         res.status(500).send(e);
     }
-    // Task.findById(_id).then((task) => {
-    //     if (!task) {
-    //         return res.status(404).send();
-    //     }
-
-    //     res.send(task);
-    // }).catch((err) => {
-    //     res.status(500).send(err);
 })
 
 // update a task
@@ -262,10 +162,8 @@ app.patch('/tasks/:id', auth, async (req, res) => {
     }
 
     try {
+
         const task = await Task.findOne({ _id: req.params.id, owner: req.user._id });
-
-
-        // const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
 
         if (!task) {
             res.status(404).send();
@@ -295,33 +193,6 @@ app.delete('/tasks/:id', auth, async (req, res) => {
     }
 })
 
-// const jwt = require('jsonwebtoken');
-
-
-// JSON.stringify() calls toJSON behind the scenese
-// let pet = {
-//     name: 'hal',
-// }
-
-// pet.toJSON = function () {
-//     console.log(this);
-//     return this;
-// }
-// console.log(JSON.stringify(pet))
-
-// const Task = require('./models/task');
-
-const main = async () => {
-    // const task = await Task.findById('5feb5cca7a6bc32e00d2bd90');
-    // await task.populate('owner').execPopulate();
-    // console.log(task.owner)
-
-    const user = await User.findById('5feb43d60c1d7b4844c4bee8');
-    await user.populate('usertasks').execPopulate();
-    console.log(user.usertasks);
-}
-
-// main();
 
 app.listen(port, () => {
     console.log(`server is listening to port ${port}`);

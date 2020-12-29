@@ -55,7 +55,6 @@ userSchema.virtual('usertasks', {
     foreignField: 'owner'
 })
 
-// instance methods
 userSchema.methods.generateAuthToken = async function () {
     const user = this;
 
@@ -68,11 +67,6 @@ userSchema.methods.generateAuthToken = async function () {
     return token;
 }
 
-// removing password and array of tokens from the user
-// This method accepts the same options as Document#toObject.
-// To apply the options to every document of your schema by default,
-// set your schemas toJSON option to the same argument.
-// userSchema.methods.getPublicProfile = function () {
 userSchema.methods.toJSON = function () {
     const user = this;
 
@@ -83,10 +77,6 @@ userSchema.methods.toJSON = function () {
     return userObject;
 }
 
-// Statics are pretty much the same as methods but allow for defining
-// functions that exist directly on your Model.
-
-// Model methods
 userSchema.statics.findByCredentials = async (email, password) => {
     console.log('in credentials')
     const user = await User.findOne({ email });
@@ -104,16 +94,13 @@ userSchema.statics.findByCredentials = async (email, password) => {
     return user;
 }
 
-// hash the plain password before saving
 userSchema.pre('save', async function (next) {
     const user = this;
-    // console.log(user); // without hashed pw 
 
     if (user.isModified('password')) {
         user.password = await bcrypt.hash(user.password, 8);
     }
 
-    // console.log(user); // with hashed pw
     next()
 })
 
@@ -123,6 +110,6 @@ userSchema.pre('remove', async function (next) {
     await Task.deleteMany({ owner: user._id })
     next()
 })
-const User = mongoose.model('User', userSchema); // ! in this way of schema and model we can make us of middlewares 
+const User = mongoose.model('User', userSchema);
 
 module.exports = User;

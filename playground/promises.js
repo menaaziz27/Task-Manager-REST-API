@@ -28,6 +28,7 @@ const add = (a, b) => {
 // })
 
 
+// promise chaining 
 add(1, 1).then(res => {
     console.log(res);
     return add(res, 1)

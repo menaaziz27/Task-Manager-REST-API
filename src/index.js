@@ -1,12 +1,28 @@
 const express = require('express');
+const bcrypt = require('bcrypt');
+
 require('./db/mongoose');
 const bodyParser = require("body-parser")
 
 const User = require('./models/user');
 const Task = require('./models/task');
+const auth = require('./middleware/auth');
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// app.use((req, res, next) => {
+//     if (req.method === 'GET') {
+//         res.send('Get requests is disabled')
+//     } else {
+//         next()
+//     }
+// })
+
+
+// app.use((req, res, next) => {
+//     res.status(503).send('Server is under maintenance')
+// })
 
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -19,8 +35,9 @@ app.post('/users', async (req, res) => {
     const user = new User(req.body);
 
     try {
+        const token = await user.generateAuthToken();
         await user.save();
-        res.status(201).send(user);
+        res.status(201).send({ user, token });
     } catch (e) {
         res.status(400).send(e);
     }
@@ -31,15 +48,28 @@ app.post('/users', async (req, res) => {
     // })
 })
 
-// Get all users
-app.get('/users', async (req, res) => {
-
+// login user
+app.post('/users/login', async (req, res) => {
     try {
-        const users = await User.find({});
-        res.send(users);
+        // in schema.statics we are calling findByCredentials by the the model itself
+        const user = await User.findByCredentials(req.body.email, req.body.password);
+        const token = await user.generateAuthToken();
+        res.send({ user, token: token });
     } catch (e) {
-        res.send(500).send();
+        res.status(400).send(e);
     }
+})
+
+// Get me
+app.get('/users/me', auth, async (req, res) => {
+    // console.log(req.user)
+    res.send(req.user);
+    // try {
+    //     const users = await User.find({});
+    //     res.send(users);
+    // } catch (e) {
+    //     res.send(500).send();
+    // }
     // User.find({}).then((users) => {
     //     res.send(users);
     // }).catch((err) => {
@@ -73,7 +103,7 @@ app.get('/users/:id', async (req, res) => {
     // })
 })
 
-
+// update user
 app.patch('/users/:id', async (req, res) => {
 
     const updates = Object.keys(req.body);
@@ -86,18 +116,27 @@ app.patch('/users/:id', async (req, res) => {
     }
 
     try {
-        const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        const user = await User.findById(req.params.id);
+
+        // !this line not updating the user!
+        // updates.forEach((update) => user.update. = req.body.update);
+        // !but this line works!
+        updates.forEach((update) => user[update] = req.body[update]);
+
+        // const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
 
         if (!user) {
             return res.status(404).send();
         }
 
+        await user.save();
         res.send(user);
     } catch (e) {
         res.status(400).send(e);
     }
 })
 
+// delete a user
 app.delete('/users/:id', async (req, res) => {
     const id = req.params.id;
 
@@ -184,12 +223,17 @@ app.patch('/tasks/:id', async (req, res) => {
     }
 
     try {
-        const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        const task = await Task.findById(req.params.id);
+
+        updates.forEach((update) => task[update] = req.body[update]);
+
+        // const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
 
         if (!task) {
             res.status(404).send();
         }
 
+        await task.save();
         res.send(task);
     } catch (e) {
         res.send(400).send(e);
@@ -211,6 +255,17 @@ app.delete('/tasks/:id', async (req, res) => {
         res.send(500).send(e);
     }
 })
+
+// const jwt = require('jsonwebtoken');
+
+// const myFunction = async () => {
+//     const token = jwt.sign({ _id: 'abc123' }, 'thisismysecret')
+//     console.log(token)
+
+//     const data = jwt.verify(token, 'thisismysecret')
+//     console.log(data)
+// }
+// myFunction();
 
 app.listen(port, () => {
     console.log(`server is listening to port ${port}`);

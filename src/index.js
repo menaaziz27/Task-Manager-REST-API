@@ -206,11 +206,12 @@ app.post('/tasks', auth, async (req, res) => {
 })
 
 // Get all tasks
-app.get('/tasks', async (req, res) => {
+app.get('/tasks', auth, async (req, res) => {
 
     try {
-        const tasks = await Task.find({});
-        res.send(tasks);
+        // const tasks = await Task.find({ owner: req.user._id });
+        await req.user.populate('usertasks').execPopulate();
+        res.send(req.user.usertasks);
     } catch (e) {
         res.status(500).send(e);
     }
@@ -222,11 +223,16 @@ app.get('/tasks', async (req, res) => {
 })
 
 // Get single task
-app.get('/tasks/:id', async (req, res) => {
+app.get('/tasks/:id', auth, async (req, res) => {
     const _id = req.params.id;
 
     try {
-        const task = await Task.findById(_id);
+        // const task = await Task.findById(_id);
+        const task = await Task.findOne({
+            _id,
+            owner: req.user._id
+        })
+
         if (!task) {
             res.status(404).send();
         }
@@ -246,7 +252,7 @@ app.get('/tasks/:id', async (req, res) => {
 })
 
 // update a task
-app.patch('/tasks/:id', async (req, res) => {
+app.patch('/tasks/:id', auth, async (req, res) => {
     const updates = Object.keys(req.body);
     const allowedUpdates = ['description', 'completed'];
     const isValid = updates.every((update) => allowedUpdates.includes(update));
@@ -256,15 +262,16 @@ app.patch('/tasks/:id', async (req, res) => {
     }
 
     try {
-        const task = await Task.findById(req.params.id);
+        const task = await Task.findOne({ _id: req.params.id, owner: req.user._id });
 
-        updates.forEach((update) => task[update] = req.body[update]);
 
         // const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
 
         if (!task) {
             res.status(404).send();
         }
+
+        updates.forEach((update) => task[update] = req.body[update]);
 
         await task.save();
         res.send(task);
@@ -274,11 +281,10 @@ app.patch('/tasks/:id', async (req, res) => {
 })
 
 // delete a task 
-app.delete('/tasks/:id', async (req, res) => {
-    const id = req.params.id;
-
+app.delete('/tasks/:id', auth, async (req, res) => {
     try {
-        const task = await Task.findByIdAndDelete(id);
+        let id = req.params.id;
+        const task = await Task.findOneAndDelete({ _id: id, owner: req.user._id });
         if (!task) {
             res.status(404).send()
         }
@@ -315,7 +321,7 @@ const main = async () => {
     console.log(user.usertasks);
 }
 
-main();
+// main();
 
 app.listen(port, () => {
     console.log(`server is listening to port ${port}`);

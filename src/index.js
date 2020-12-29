@@ -41,6 +41,7 @@ app.post('/users/login', async (req, res) => {
     }
 })
 
+// logout current user
 app.post('/users/logout', auth, async (req, res) => {
     try {
         req.user.tokens = req.user.tokens.filter(token => token.token !== req.token)
@@ -51,7 +52,7 @@ app.post('/users/logout', auth, async (req, res) => {
         res.status(500).send();
     }
 })
-
+// delete all user's tokens
 app.post('/users/logoutAll', auth, async (req, res) => {
     try {
         // clearing my array of tokens []
